@@ -1,10 +1,16 @@
 import os, glob
+import re
 import pandas as pd
 
 LABEL_MAPPING = {'PNEUMONIA_DOC_YES': 1, 'PNEUMONIA_DOC_NO': 0}
 
+
+regexes = [
+    re.compile('[_]{3,}'),
+    re.compile('\[\*\*[\d\-a-z\s\(\)]+\*\*\]')
+]
+
 def read_pneumonia_data(directory):
-    
     text_files = glob.glob(os.path.join(directory, 'subject*.txt'))
     
     record_data = []
@@ -18,6 +24,8 @@ def read_pneumonia_data(directory):
 
         with open(text_file) as f:
             d['text'] = f.read()
+            d['preprocessed_text'] = preprocess(d['text'])
+            
         with open(anno_file) as f:
             lines = f.readlines()
             d['annotations'] = lines
@@ -32,3 +40,10 @@ def read_pneumonia_data(directory):
         record_data.append(d)
         
     return pd.DataFrame(record_data)
+
+
+def preprocess(text):
+    text = text.lower().strip()
+    for regex in regexes:
+        text = regex.sub('', text)
+    return text
